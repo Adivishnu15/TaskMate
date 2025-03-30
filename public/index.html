@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMate</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { 
+            background: linear-gradient(to right, #ece9e6, #ffffff); 
+            min-height: 100vh; 
+            padding: 2rem; 
+            color: #333; 
+            line-height: 1.6; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            flex-direction: column; 
+        }
+        h1 { text-align: center; font-size: 2.5rem; color: #3498db; margin-bottom: 2rem; }
+        .container { display: flex; justify-content: space-between; gap: 2rem; flex-wrap: wrap; width: 100%; max-width: 1200px; }
+        .box { background: #fff; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); width: 100%; max-width: 500px; margin-bottom: 2rem; cursor: pointer; transition: transform 0.3s ease; }
+        .box:hover { transform: scale(1.05); }
+        .box h2 { margin-bottom: 1rem; font-size: 1.8rem; color: #333; }
+        input, button { width: 100%; padding: 0.8rem; margin: 0.5rem 0; border-radius: 5px; }
+        button { background: #3498db; color: #fff; cursor: pointer; }
+        button:hover { background: #2980b9; }
+        .status-check { display: flex; gap: 0.5rem; justify-content: space-between; }
+        .footer { 
+            width: 100%; 
+            text-align: center; 
+            padding: 1rem; 
+            background-color: #2c3e50; 
+            color: #fff; 
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+        .blue { color: #3498db; }
+        .orange { color: #e67e22; }
+        .green { color: #27ae60; }
+        @media (max-width: 768px) {
+            .container { flex-direction: column; align-items: center; }
+            .box { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="blue">Welcome to TaskMate</h1>
+    
+    <div class="container">
+        <!-- Worker Registration Box -->
+        <div class="box" onclick="toggleVisibility('workerFormBox')">
+            <h2 class="blue">Worker Registration</h2>
+            <div id="workerFormBox" style="display: none;">
+                <form id="workerForm">
+                    <input type="text" name="name" placeholder="Name" required>
+                    <input type="text" name="phone" placeholder="Phone" required>
+                    <input type="text" name="location" placeholder="Location" required>
+                    <input type="text" name="profession" placeholder="Profession" required>
+                    <input type="date" name="availableDates" required>
+                    <button type="submit">Register</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Customer Booking Box -->
+        <div class="box" onclick="toggleVisibility('customerFormBox')">
+            <h2 class="orange">Customer Booking</h2>
+            <div id="customerFormBox" style="display: none;">
+                <form id="customerForm">
+                    <input type="text" name="name" placeholder="Name" required>
+                    <input type="date" name="dates" required>
+                    <input type="text" name="aadhar" placeholder="Aadhar" required>
+                    <input type="text" name="location" placeholder="Location" required>
+                    <input type="text" name="mobile" placeholder="Mobile" required>
+                    <input type="text" name="workType" placeholder="Work Type" required>
+                    <button type="submit">Book Worker</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Check Customer Status Box -->
+        <div class="box" onclick="toggleVisibility('customerStatusBox')">
+            <h2 class="green">Check Customer Status</h2>
+            <div id="customerStatusBox" style="display: none;">
+                <div class="status-check">
+                    <input type="text" id="customerRefCode" placeholder="Customer Reference Code">
+                    <button onclick="checkCustomerStatus()">Check</button>
+                </div>
+                <div id="customerStatusResult"></div>
+            </div>
+        </div>
+
+        <!-- Check Worker Status Box -->
+        <div class="box" onclick="toggleVisibility('workerStatusBox')">
+            <h2 class="blue">Check Worker Status</h2>
+            <div id="workerStatusBox" style="display: none;">
+                <div class="status-check">
+                    <input type="text" id="workerRefCode" placeholder="Worker Reference Code">
+                    <button onclick="checkWorkerStatus()">Check</button>
+                </div>
+                <div id="workerStatusResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer with Copyright -->
+    <div class="footer">
+        <p>&copy; 2025 TaskMate. All rights reserved.</p>
+    </div>
+
+    <script>
+        // Function to toggle visibility of forms or content boxes
+        function toggleVisibility(boxId) {
+            const box = document.getElementById(boxId);
+            box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+        }
+
+        document.getElementById('workerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = {
+                name: e.target.name.value,
+                phone: e.target.phone.value,
+                location: e.target.location.value,
+                profession: e.target.profession.value,
+                availableDates: e.target.availableDates.value
+            };
+            const response = await fetch('/api/worker/register', {
+                method: 'POST',
+                body: JSON.stringify(formData),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            alert(data.success ? `Worker Registered Successfully. Reference Code: ${data.referenceCode}` : 'Error: ' + data.error);
+        });
+
+        document.getElementById('customerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                name: e.target.name.value,
+                dates: [e.target.dates.value],
+                aadhar: e.target.aadhar.value.trim(),
+                location: e.target.location.value,
+                mobile: e.target.mobile.value,
+                workType: e.target.workType.value  // Ensure workType is added
+            };
+
+            if (!formData.aadhar) {
+                alert("Aadhaar number is required!");
+                return;
+            }
+
+            const response = await fetch('/api/customer/book', {
+                method: 'POST',
+                body: JSON.stringify(formData),
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json();
+            
+            alert(data.success ? `Customer Booked. Reference Code: ${data.referenceCode}` : 'Error: ' + data.error);
+        });
+
+        async function checkCustomerStatus() {
+            const refCode = document.getElementById('customerRefCode').value.trim();
+            if (!refCode) {
+                alert("Please enter a customer reference code");
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/customer/status/${refCode}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const booking = data.booking;
+                    document.getElementById('customerStatusResult').innerHTML = ` 
+                        <h3>Status: ${booking.status}</h3>
+                        ${booking.assignedWorker ? `<p>Assigned Worker: ${booking.assignedWorker.name} (${booking.assignedWorker.profession})</p>` : '<p>No worker assigned yet.</p>'}
+                    `;
+                } else {
+                    alert("Error: " + data.message);
+                }
+            } catch (error) {
+                alert("Failed to fetch customer status. Try again.");
+            }
+        }
+
+        async function checkWorkerStatus() {
+            const refCode = document.getElementById('workerRefCode').value.trim();
+            if (!refCode) {
+                alert("Please enter a worker reference code!");
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/worker/status/${refCode}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('workerStatusResult').innerHTML = `<h3>Status: ${data.status}</h3>`;
+                } else {
+                    alert("Error: " + data.message);
+                }
+            } catch (error) {
+                alert("Failed to fetch worker status. Try again.");
+            }
+        }
+    </script>
+</body>
+</html>
